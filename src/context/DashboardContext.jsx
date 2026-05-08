@@ -28,7 +28,6 @@ export function DashboardProvider({ children }) {
       setIss((current) => {
         const previousPoint = current.current
         const speed = previousPoint ? calculateSpeedKmh(previousPoint, point) : 27600 // Default ISS orbital speed
-        console.log('Speed calculation:', { previousPoint, currentPoint: point, speed })
         const path = [...current.path, point].slice(-15)
         const speedTrend = [
           ...current.speedTrend,
