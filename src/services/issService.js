@@ -29,7 +29,10 @@ function getMockIssPosition() {
 
 export async function fetchIssPosition() {
   try {
-    const response = await fetch("/api/iss", { timeout: 5000 });
+    const response = await fetch(`/api/iss?t=${Date.now()}`, { 
+      timeout: 5000, 
+      cache: 'no-store' 
+    });
     
     if (!response.ok) {
       throw new Error("Unable to fetch ISS position");
@@ -60,8 +63,9 @@ const MOCK_ASTRONAUTS = [
 
 export async function fetchAstronauts() {
   try {
-    const response = await fetch("/api/astros", {
+    const response = await fetch(`/api/astros?t=${Date.now()}`, {
       timeout: 5000,
+      cache: 'no-store'
     });
 
     if (!response.ok) throw new Error("Unable to fetch astronaut roster");
@@ -76,7 +80,8 @@ export async function fetchAstronauts() {
 
 export async function fetchNearestPlace({ lat, lng }) {
   const response = await fetch(
-    `/api/geocode?lat=${lat}&lon=${lng}`,
+    `/api/geocode?lat=${lat}&lon=${lng}&t=${Date.now()}`, 
+    { cache: 'no-store' }
   );
   if (!response.ok) throw new Error("Unable to reverse geocode ISS location");
 
