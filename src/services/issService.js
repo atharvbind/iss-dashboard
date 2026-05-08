@@ -3,11 +3,29 @@ const ISS_FALLBACK_URL = "https://api.wheretheiss.at/v1/satellites/25544";
 const OPEN_NOTIFY_PROXY = "https://api.allorigins.win/raw?url=";
 
 // Mock data for when APIs fail
-const MOCK_ISS_POSITION = {
-  lat: 40.7128,
-  lng: -74.0060,
-  timestamp: Math.floor(Date.now() / 1000)
-};
+function getMockIssPosition() {
+  // Simulate ISS movement: roughly 7.66 km/s orbital speed
+  // ISS orbits Earth every ~90 minutes, so position changes constantly
+  const now = Math.floor(Date.now() / 1000);
+  const baseLat = 40.7128;
+  const baseLng = -74.006;
+
+  // Create more realistic orbital movement
+  // ISS moves ~15 degrees longitude per orbit (every 90 minutes)
+  // So in 15 seconds, it moves about 0.069 degrees longitude
+  const secondsSinceEpoch = now % (90 * 60); // 90 minutes in seconds
+  const orbitProgress = secondsSinceEpoch / (90 * 60); // 0 to 1
+
+  // Simulate orbital path: roughly east-west movement with some north-south variation
+  const lng = baseLng + (orbitProgress * 360) % 360 - 180; // Full circle
+  const lat = baseLat + Math.sin(orbitProgress * 2 * Math.PI) * 5; // ±5 degrees variation
+
+  return {
+    lat: Math.max(-90, Math.min(90, lat)), // Clamp to valid latitude
+    lng: lng,
+    timestamp: now,
+  };
+}
 
 export async function fetchIssPosition() {
   try {
@@ -15,10 +33,12 @@ export async function fetchIssPosition() {
     try {
       response = await fetch(
         `${OPEN_NOTIFY_PROXY}${encodeURIComponent(`${OPEN_NOTIFY_BASE}/iss-now.json`)}`,
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
     } catch {
-      response = await fetch(`${OPEN_NOTIFY_BASE}/iss-now.json`, { timeout: 5000 });
+      response = await fetch(`${OPEN_NOTIFY_BASE}/iss-now.json`, {
+        timeout: 5000,
+      });
     }
 
     if (!response.ok) {
@@ -45,10 +65,7 @@ export async function fetchIssPosition() {
     } catch {
       // Return mock data if all APIs fail
       console.warn("Using mock ISS data - APIs are unavailable");
-      return {
-        ...MOCK_ISS_POSITION,
-        timestamp: Math.floor(Date.now() / 1000)
-      };
+      return getMockIssPosition();
     }
   }
 }
@@ -61,7 +78,7 @@ const MOCK_ASTRONAUTS = [
   { name: "Matthew Dominick", craft: "ISS" },
   { name: "Michael Barratt", craft: "ISS" },
   { name: "Jeanette Epps", craft: "ISS" },
-  { name: "Alexander Grebenkin", craft: "ISS" }
+  { name: "Alexander Grebenkin", craft: "ISS" },
 ];
 
 export async function fetchAstronauts() {
@@ -71,10 +88,12 @@ export async function fetchAstronauts() {
     try {
       response = await fetch(
         `${OPEN_NOTIFY_PROXY}${encodeURIComponent(`${OPEN_NOTIFY_BASE}/astros.json`)}`,
-        { timeout: 5000 }
+        { timeout: 5000 },
       );
     } catch {
-      response = await fetch(`${OPEN_NOTIFY_BASE}/astros.json`, { timeout: 5000 });
+      response = await fetch(`${OPEN_NOTIFY_BASE}/astros.json`, {
+        timeout: 5000,
+      });
     }
 
     if (!response.ok) throw new Error("Unable to fetch astronaut roster");
