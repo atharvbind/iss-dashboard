@@ -7,14 +7,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Missing lat or lon parameters" });
   }
 
-  const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}&zoom=10&addressdetails=1`;
+  const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
 
   try {
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'ISS-Dashboard/1.0 (https://github.com/atharvbind/iss-dashboard)'
-      }
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       // Return a generic location name if geocoding fails
@@ -25,8 +21,17 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    res.json(data);
-  } catch (error) {
+    
+    // Map BigDataCloud response to the Nominatim format expected by the frontend
+    res.json({
+      address: {
+        city: data.city || data.locality,
+        state: data.principalSubdivision,
+        country: data.countryName
+      },
+      display_name: data.locality || data.city || data.principalSubdivision || data.countryName || "Unknown location"
+    });
+  } catch {
     // Return fallback location on error
     res.json({
       display_name: "Unknown location",

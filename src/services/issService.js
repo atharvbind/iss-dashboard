@@ -29,18 +29,8 @@ function getMockIssPosition() {
 
 export async function fetchIssPosition() {
   try {
-    let response;
-    try {
-      response = await fetch(
-        `${OPEN_NOTIFY_PROXY}${encodeURIComponent(`${OPEN_NOTIFY_BASE}/iss-now.json`)}`,
-        { timeout: 5000 },
-      );
-    } catch {
-      response = await fetch(`${OPEN_NOTIFY_BASE}/iss-now.json`, {
-        timeout: 5000,
-      });
-    }
-
+    const response = await fetch("/api/iss", { timeout: 5000 });
+    
     if (!response.ok) {
       throw new Error("Unable to fetch ISS position");
     }
@@ -52,21 +42,8 @@ export async function fetchIssPosition() {
       timestamp: Number(data.timestamp),
     };
   } catch {
-    try {
-      const response = await fetch(ISS_FALLBACK_URL, { timeout: 5000 });
-      if (!response.ok) throw new Error("Unable to fetch ISS position");
-
-      const data = await response.json();
-      return {
-        lat: Number(data.latitude),
-        lng: Number(data.longitude),
-        timestamp: Number(data.timestamp),
-      };
-    } catch {
-      // Return mock data if all APIs fail
-      console.warn("Using mock ISS data - APIs are unavailable");
-      return getMockIssPosition();
-    }
+    console.warn("Using mock ISS data - API is unavailable");
+    return getMockIssPosition();
   }
 }
 

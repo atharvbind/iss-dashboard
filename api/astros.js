@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
     const data = JSON.parse(text);
     res.json(data);
-  } catch (error) {
+  } catch {
     // Return mock data on error
     res.json({
       people: [
