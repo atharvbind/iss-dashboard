@@ -165,7 +165,6 @@ export function DashboardProvider({ children }) {
     fetchNews()
       .then((result) => {
         if (!active) return;
-        console.log('News loaded:', result.articles.length, 'articles');
         setNews({
           articles: result.articles,
           loading: false,
@@ -175,7 +174,6 @@ export function DashboardProvider({ children }) {
       })
       .catch((error) => {
         if (!active) return;
-        console.error('News loading error:', error);
         setNews({
           articles: [],
           loading: false,
