@@ -28,8 +28,9 @@ export function getCachedNews() {
 }
 
 export async function fetchNews({ force = false } = {}) {
-  const cached = !force ? getCachedNews() : null
-  if (cached) return { articles: cached, fromCache: true }
+  // Temporarily disable cache to ensure fresh data
+  // const cached = !force ? getCachedNews() : null
+  // if (cached) return { articles: cached, fromCache: true }
 
   const apiKey = import.meta.env.VITE_GNEWS_API_KEY
   if (!apiKey) {
