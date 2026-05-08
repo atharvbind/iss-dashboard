@@ -1,9 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
-import toast from 'react-hot-toast'
-import { fetchAstronauts, fetchIssPosition, fetchNearestPlace } from '../services/issService'
-import { fetchNews } from '../services/newsService'
-import { calculateSpeedKmh } from '../utils/haversine'
-import { DashboardContext } from './dashboardContextObject'
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import {
+  fetchAstronauts,
+  fetchIssPosition,
+  fetchNearestPlace,
+} from "../services/issService";
+import { fetchNews } from "../services/newsService";
+import { calculateSpeedKmh } from "../utils/haversine";
+import { DashboardContext } from "./dashboardContextObject";
 
 export function DashboardProvider({ children }) {
   const [iss, setIss] = useState({
@@ -12,142 +16,178 @@ export function DashboardProvider({ children }) {
     speed: 0,
     speedTrend: [],
     loading: true,
-    locationName: 'Locating...',
-    error: '',
-  })
-  const [astronauts, setAstronauts] = useState({ people: [], loading: true, error: '' })
-  const [news, setNews] = useState({ articles: [], loading: true, fromCache: false, error: '' })
-  const [selectedCategory, setSelectedCategory] = useState('')
+    locationName: "Locating...",
+    error: "",
+  });
+  const [astronauts, setAstronauts] = useState({
+    people: [],
+    loading: true,
+    error: "",
+  });
+  const [news, setNews] = useState({
+    articles: [],
+    loading: true,
+    fromCache: false,
+    error: "",
+  });
+  const [selectedCategory, setSelectedCategory] = useState("");
 
   async function refreshIss({ notify = true } = {}) {
-    setIss((current) => ({ ...current, loading: true, error: '' }))
+    setIss((current) => ({ ...current, loading: true, error: "" }));
 
     try {
-      const point = await fetchIssPosition()
+      const point = await fetchIssPosition();
 
       setIss((current) => {
-        const previousPoint = current.current
-        const speed = previousPoint ? calculateSpeedKmh(previousPoint, point) : 27600 // Default ISS orbital speed
-        const path = [...current.path, point].slice(-15)
+        const previousPoint = current.current;
+        const speed = previousPoint
+          ? calculateSpeedKmh(previousPoint, point)
+          : 27600; // Default ISS orbital speed
+        const path = [...current.path, point].slice(-15);
         const speedTrend = [
           ...current.speedTrend,
           {
             time: new Date(point.timestamp * 1000).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
             }),
             speed: Math.round(speed),
           },
-        ].slice(-30)
+        ].slice(-30);
 
-        return { ...current, current: point, path, speed, speedTrend, loading: false, error: '' }
-      })
+        return {
+          ...current,
+          current: point,
+          path,
+          speed,
+          speedTrend,
+          loading: false,
+          error: "",
+        };
+      });
 
       fetchNearestPlace(point)
         .then((locationName) => {
-          setIss((current) => ({ ...current, locationName }))
+          setIss((current) => ({ ...current, locationName }));
         })
         .catch(() => {
-          setIss((current) => ({ ...current, locationName: 'Over ocean or remote region' }))
-        })
+          setIss((current) => ({
+            ...current,
+            locationName: "Over ocean or remote region",
+          }));
+        });
 
-      if (notify) toast.success('ISS telemetry refreshed.')
+      if (notify) toast.success("ISS telemetry refreshed.");
     } catch {
       setIss((current) => ({
         ...current,
         loading: false,
-        error: 'ISS position feed is unavailable. Try again in a moment.',
-      }))
-      if (notify) toast.error('ISS position feed is unavailable.')
+        error: "ISS position feed is unavailable. Try again in a moment.",
+      }));
+      if (notify) toast.error("ISS position feed is unavailable.");
     }
   }
 
   async function refreshAstronauts({ notify = true } = {}) {
-    setAstronauts((current) => ({ ...current, loading: true, error: '' }))
+    setAstronauts((current) => ({ ...current, loading: true, error: "" }));
 
     try {
-      const people = await fetchAstronauts()
-      setAstronauts({ people, loading: false, error: '' })
-      if (notify) toast.success('People in space refreshed.')
+      const people = await fetchAstronauts();
+      setAstronauts({ people, loading: false, error: "" });
+      if (notify) toast.success("People in space refreshed.");
     } catch {
       setAstronauts((current) => ({
         ...current,
         loading: false,
-        error: 'Astronaut roster could not be loaded.',
-      }))
-      if (notify) toast.error('Astronaut roster could not be loaded.')
+        error: "Astronaut roster could not be loaded.",
+      }));
+      if (notify) toast.error("Astronaut roster could not be loaded.");
     }
   }
 
   async function refreshNews(options = {}) {
-    setNews((current) => ({ ...current, loading: true, error: '' }))
+    setNews((current) => ({ ...current, loading: true, error: "" }));
 
     try {
-      const result = await fetchNews(options)
-      setNews({ articles: result.articles, loading: false, fromCache: result.fromCache, error: '' })
-      toast.success(result.fromCache ? 'Loaded cached news.' : 'News refreshed.')
+      const result = await fetchNews(options);
+      setNews({
+        articles: result.articles,
+        loading: false,
+        fromCache: result.fromCache,
+        error: "",
+      });
+      toast.success(
+        result.fromCache ? "Loaded cached news." : "News refreshed.",
+      );
     } catch (error) {
       setNews({
         articles: [],
         loading: false,
         fromCache: false,
-        error: error.message || 'GNews request failed. Please retry.',
-      })
-      toast.error(error.message || 'GNews request failed.')
+        error: error.message || "GNews request failed. Please retry.",
+      });
+      toast.error(error.message || "GNews request failed.");
     }
   }
 
   useEffect(() => {
-    let active = true
+    let active = true;
 
     async function loadIss() {
-      if (active) await refreshIss({ notify: false })
+      if (active) await refreshIss({ notify: false });
     }
 
-    loadIss()
-    const interval = window.setInterval(loadIss, 15000)
+    loadIss();
+    const interval = window.setInterval(loadIss, 15000);
     return () => {
-      active = false
-      window.clearInterval(interval)
-    }
-  }, [])
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, []);
 
   useEffect(() => {
-    let active = true
+    let active = true;
 
     async function loadAstronauts() {
-      if (active) await refreshAstronauts({ notify: false })
+      if (active) await refreshAstronauts({ notify: false });
     }
 
-    loadAstronauts()
+    loadAstronauts();
     return () => {
-      active = false
-    }
-  }, [])
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
-    let active = true
+    let active = true;
 
     fetchNews()
       .then((result) => {
-        if (!active) return
-        setNews({ articles: result.articles, loading: false, fromCache: result.fromCache, error: '' })
+        if (!active) return;
+        console.log('News loaded:', result.articles.length, 'articles');
+        setNews({
+          articles: result.articles,
+          loading: false,
+          fromCache: result.fromCache,
+          error: "",
+        });
       })
       .catch((error) => {
-        if (!active) return
+        if (!active) return;
+        console.error('News loading error:', error);
         setNews({
           articles: [],
           loading: false,
           fromCache: false,
-          error: error.message || 'GNews request failed. Please retry.',
-        })
-      })
+          error: error.message || "GNews request failed. Please retry.",
+        });
+      });
 
     return () => {
-      active = false
-    }
-  }, [])
+      active = false;
+    };
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -161,7 +201,11 @@ export function DashboardProvider({ children }) {
       setSelectedCategory,
     }),
     [iss, astronauts, news, selectedCategory],
-  )
+  );
 
-  return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>
+  return (
+    <DashboardContext.Provider value={value}>
+      {children}
+    </DashboardContext.Provider>
+  );
 }
