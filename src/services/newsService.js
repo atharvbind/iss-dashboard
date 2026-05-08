@@ -32,41 +32,38 @@ export async function fetchNews({ force = false } = {}) {
   const cached = !force ? getCachedNews() : null;
   if (cached) return { articles: cached, fromCache: true };
 
-  const apiKey = import.meta.env.VITE_GNEWS_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "Missing GNews API key. Add VITE_GNEWS_API_KEY to your .env file.",
-    );
-  }
-
   const params = new URLSearchParams({
     category: "general",
     lang: "en",
     max: "10",
-    apikey: apiKey,
   });
 
-  const response = await fetch(`${GNEWS_URL}?${params}`);
+  const response = await fetch(`/api/news?${params}`)
   if (!response.ok) {
-    if (response.status === 401 || response.status === 403) {
-      throw new Error(
-        "GNews rejected the API key. Check VITE_GNEWS_API_KEY and retry.",
-      );
+    console.warn('News proxy failed:', response.status, response.statusText)
+
+    const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(
+      `${GNEWS_URL}?${params}`,
+    )}`
+    const fallbackResponse = await fetch(fallbackUrl)
+    if (!fallbackResponse.ok) {
+      throw new Error('GNews request failed through proxy.')
     }
-    if (response.status === 429) {
-      throw new Error("GNews API limit reached. Please wait and retry.");
-    }
-    throw new Error("GNews request failed. Please retry.");
+
+    const fallbackData = await fallbackResponse.json()
+    const articles = (fallbackData.articles ?? []).slice(0, 10).map(normalizeArticle)
+    writeStorage(storageKeys.news, { lastFetched: Date.now(), articles })
+    return { articles, fromCache: false }
   }
 
-  const data = await response.json();
+  const data = await response.json()
   if (data.errors) {
     throw new Error(
-      "GNews returned an API error. Please check the key or retry later.",
-    );
+      'GNews returned an API error. Please check the key or retry later.',
+    )
   }
 
-  const articles = (data.articles ?? []).slice(0, 10).map(normalizeArticle);
-  writeStorage(storageKeys.news, { lastFetched: Date.now(), articles });
-  return { articles, fromCache: false };
+  const articles = (data.articles ?? []).slice(0, 10).map(normalizeArticle)
+  writeStorage(storageKeys.news, { lastFetched: Date.now(), articles })
+  return { articles, fromCache: false }
 }
