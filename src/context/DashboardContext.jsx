@@ -6,14 +6,14 @@ import {
   fetchNearestPlace,
 } from "../services/issService";
 import { fetchNews } from "../services/newsService";
-import { calculateSpeedKmh } from "../utils/haversine";
+import { calculateDistanceKm } from "../utils/haversine";
 import { DashboardContext } from "./dashboardContextObject";
 
 export function DashboardProvider({ children }) {
   const [iss, setIss] = useState({
     current: null,
     path: [],
-    speed: 27600, // Default ISS orbital speed
+    speed: 0,
     speedTrend: [],
     loading: true,
     locationName: "Locating...",
@@ -42,9 +42,21 @@ export function DashboardProvider({ children }) {
 
       setIss((current) => {
         const previousPoint = current.current;
-        const speed = previousPoint
-          ? calculateSpeedKmh(previousPoint, point)
-          : 27600; // Default ISS orbital speed
+
+        // Compute speed without enforcing a minimum value
+        let speed = 0;
+        let elapsedHours = null;
+        let distanceKm = null;
+
+        if (previousPoint && previousPoint.timestamp && point.timestamp) {
+          elapsedHours = (point.timestamp - previousPoint.timestamp) / 3600;
+          distanceKm = calculateDistanceKm(previousPoint, point);
+          if (elapsedHours > 0) speed = distanceKm / elapsedHours;
+        }
+
+        if (!Number.isFinite(speed) || speed <= 0) speed = 0;
+        speed = Math.round(speed);
+
         const path = [...current.path, point].slice(-15);
         const speedTrend = [
           ...current.speedTrend,
@@ -54,16 +66,19 @@ export function DashboardProvider({ children }) {
               minute: "2-digit",
               second: "2-digit",
             }),
-            speed: Math.round(speed),
+            speed,
           },
         ].slice(-30);
 
-        console.log(
-          "📊 Speed calculated:",
+        console.log("📊 Speed details:", {
+          previousTs: previousPoint?.timestamp,
+          currentTs: point.timestamp,
+          elapsedHours,
+          distanceKm,
           speed,
-          "km/h, trend length:",
-          speedTrend.length,
-        );
+          trendLen: speedTrend.length,
+        });
+
         return {
           ...current,
           current: point,
