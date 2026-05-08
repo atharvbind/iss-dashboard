@@ -2,7 +2,7 @@
 
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  const url = "http://api.open-notify.org/iss-now.json";
+  const url = `http://api.open-notify.org/iss-now.json?t=${Date.now()}`;
 
   try {
     const response = await fetch(url);
