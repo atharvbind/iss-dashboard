@@ -13,7 +13,7 @@ export function DashboardProvider({ children }) {
   const [iss, setIss] = useState({
     current: null,
     path: [],
-    speed: 0,
+    speed: 27600, // Default ISS orbital speed
     speedTrend: [],
     loading: true,
     locationName: "Locating...",
@@ -33,17 +33,17 @@ export function DashboardProvider({ children }) {
   const [selectedCategory, setSelectedCategory] = useState("");
 
   async function refreshIss({ notify = true } = {}) {
-    console.log('🔄 Refreshing ISS data...')
+    console.log("🔄 Refreshing ISS data...");
     setIss((current) => ({ ...current, loading: true, error: "" }));
 
     try {
       const point = await fetchIssPosition();
-      console.log('✅ ISS position fetched:', point)
+      console.log("✅ ISS position fetched:", point);
 
       setIss((current) => {
         const previousPoint = current.current;
         const speed = previousPoint
-          ? calculateSpeedKmh(previousPoint, point)
+          ? Math.max(calculateSpeedKmh(previousPoint, point), 27600) // Never show less than orbital speed
           : 27600; // Default ISS orbital speed
         const path = [...current.path, point].slice(-15);
         const speedTrend = [
@@ -58,7 +58,12 @@ export function DashboardProvider({ children }) {
           },
         ].slice(-30);
 
-        console.log('📊 Speed calculated:', speed, 'km/h, trend length:', speedTrend.length)
+        console.log(
+          "📊 Speed calculated:",
+          speed,
+          "km/h, trend length:",
+          speedTrend.length,
+        );
         return {
           ...current,
           current: point,
@@ -72,7 +77,7 @@ export function DashboardProvider({ children }) {
 
       fetchNearestPlace(point)
         .then((locationName) => {
-          console.log('📍 Location found:', locationName)
+          console.log("📍 Location found:", locationName);
           setIss((current) => ({ ...current, locationName }));
         })
         .catch(() => {
