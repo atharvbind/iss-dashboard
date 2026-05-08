@@ -33,10 +33,12 @@ export function DashboardProvider({ children }) {
   const [selectedCategory, setSelectedCategory] = useState("");
 
   async function refreshIss({ notify = true } = {}) {
+    console.log('🔄 Refreshing ISS data...')
     setIss((current) => ({ ...current, loading: true, error: "" }));
 
     try {
       const point = await fetchIssPosition();
+      console.log('✅ ISS position fetched:', point)
 
       setIss((current) => {
         const previousPoint = current.current;
@@ -56,6 +58,7 @@ export function DashboardProvider({ children }) {
           },
         ].slice(-30);
 
+        console.log('📊 Speed calculated:', speed, 'km/h, trend length:', speedTrend.length)
         return {
           ...current,
           current: point,
@@ -69,6 +72,7 @@ export function DashboardProvider({ children }) {
 
       fetchNearestPlace(point)
         .then((locationName) => {
+          console.log('📍 Location found:', locationName)
           setIss((current) => ({ ...current, locationName }));
         })
         .catch(() => {
@@ -90,13 +94,16 @@ export function DashboardProvider({ children }) {
   }
 
   async function refreshAstronauts({ notify = true } = {}) {
+    console.log("👥 Refreshing astronauts...");
     setAstronauts((current) => ({ ...current, loading: true, error: "" }));
 
     try {
       const people = await fetchAstronauts();
+      console.log("✅ Astronauts fetched:", people.length, "people");
       setAstronauts({ people, loading: false, error: "" });
       if (notify) toast.success("People in space refreshed.");
-    } catch {
+    } catch (error) {
+      console.error("❌ Astronauts refresh failed:", error);
       setAstronauts((current) => ({
         ...current,
         loading: false,
@@ -162,9 +169,16 @@ export function DashboardProvider({ children }) {
   useEffect(() => {
     let active = true;
 
+    console.log("📰 Loading news...");
     fetchNews()
       .then((result) => {
         if (!active) return;
+        console.log(
+          "✅ News loaded:",
+          result.articles.length,
+          "articles, fromCache:",
+          result.fromCache,
+        );
         setNews({
           articles: result.articles,
           loading: false,
@@ -174,6 +188,7 @@ export function DashboardProvider({ children }) {
       })
       .catch((error) => {
         if (!active) return;
+        console.error("❌ News loading failed:", error);
         setNews({
           articles: [],
           loading: false,
