@@ -43,7 +43,7 @@ export function DashboardProvider({ children }) {
       setIss((current) => {
         const previousPoint = current.current;
         const speed = previousPoint
-          ? Math.max(calculateSpeedKmh(previousPoint, point), 27600) // Never show less than orbital speed
+          ? calculateSpeedKmh(previousPoint, point)
           : 27600; // Default ISS orbital speed
         const path = [...current.path, point].slice(-15);
         const speedTrend = [

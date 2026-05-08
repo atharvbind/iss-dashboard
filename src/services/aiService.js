@@ -1,4 +1,4 @@
-const HF_MODEL = "openai/gpt-oss-120b:fastest";
+const HF_MODEL = "mistralai/Mistral-7B-Instruct-v0.2";
 const HF_URL = "https://router.huggingface.co/v1/chat/completions";
 const FALLBACK_REPLY = "I only have access to current dashboard data.";
 

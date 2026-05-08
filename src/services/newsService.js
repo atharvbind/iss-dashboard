@@ -38,32 +38,34 @@ export async function fetchNews({ force = false } = {}) {
     max: "10",
   });
 
-  const response = await fetch(`/api/news?${params}`)
+  const response = await fetch(`/api/news?${params}`);
   if (!response.ok) {
-    console.warn('News proxy failed:', response.status, response.statusText)
+    console.warn("News proxy failed:", response.status, response.statusText);
 
     const fallbackUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(
       `${GNEWS_URL}?${params}`,
-    )}`
-    const fallbackResponse = await fetch(fallbackUrl)
+    )}`;
+    const fallbackResponse = await fetch(fallbackUrl);
     if (!fallbackResponse.ok) {
-      throw new Error('GNews request failed through proxy.')
+      throw new Error("GNews request failed through proxy.");
     }
 
-    const fallbackData = await fallbackResponse.json()
-    const articles = (fallbackData.articles ?? []).slice(0, 10).map(normalizeArticle)
-    writeStorage(storageKeys.news, { lastFetched: Date.now(), articles })
-    return { articles, fromCache: false }
+    const fallbackData = await fallbackResponse.json();
+    const articles = (fallbackData.articles ?? [])
+      .slice(0, 10)
+      .map(normalizeArticle);
+    writeStorage(storageKeys.news, { lastFetched: Date.now(), articles });
+    return { articles, fromCache: false };
   }
 
-  const data = await response.json()
+  const data = await response.json();
   if (data.errors) {
     throw new Error(
-      'GNews returned an API error. Please check the key or retry later.',
-    )
+      "GNews returned an API error. Please check the key or retry later.",
+    );
   }
 
-  const articles = (data.articles ?? []).slice(0, 10).map(normalizeArticle)
-  writeStorage(storageKeys.news, { lastFetched: Date.now(), articles })
-  return { articles, fromCache: false }
+  const articles = (data.articles ?? []).slice(0, 10).map(normalizeArticle);
+  writeStorage(storageKeys.news, { lastFetched: Date.now(), articles });
+  return { articles, fromCache: false };
 }

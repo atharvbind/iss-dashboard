@@ -17,7 +17,7 @@ function getMockIssPosition() {
   const orbitProgress = secondsSinceEpoch / (90 * 60); // 0 to 1
 
   // Simulate orbital path: roughly east-west movement with some north-south variation
-  const lng = baseLng + (orbitProgress * 360) % 360 - 180; // Full circle
+  const lng = baseLng + ((orbitProgress * 360) % 360) - 180; // Full circle
   const lat = baseLat + Math.sin(orbitProgress * 2 * Math.PI) * 5; // ±5 degrees variation
 
   return {
@@ -83,18 +83,9 @@ const MOCK_ASTRONAUTS = [
 
 export async function fetchAstronauts() {
   try {
-    let response;
-
-    try {
-      response = await fetch(
-        `${OPEN_NOTIFY_PROXY}${encodeURIComponent(`${OPEN_NOTIFY_BASE}/astros.json`)}`,
-        { timeout: 5000 },
-      );
-    } catch {
-      response = await fetch(`${OPEN_NOTIFY_BASE}/astros.json`, {
-        timeout: 5000,
-      });
-    }
+    const response = await fetch("/api/astros", {
+      timeout: 5000,
+    });
 
     if (!response.ok) throw new Error("Unable to fetch astronaut roster");
 
@@ -107,16 +98,8 @@ export async function fetchAstronauts() {
 }
 
 export async function fetchNearestPlace({ lat, lng }) {
-  const params = new URLSearchParams({
-    format: "jsonv2",
-    lat: String(lat),
-    lon: String(lng),
-    zoom: "10",
-    addressdetails: "1",
-  });
-
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?${params}`,
+    `/api/geocode?lat=${lat}&lon=${lng}`,
   );
   if (!response.ok) throw new Error("Unable to reverse geocode ISS location");
 
